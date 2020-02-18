@@ -17,7 +17,7 @@ for _ in range(1000):
 	obs=env.reset()
 	total_reward = 0
 	while True:
-		#env.render()
+		env.render()
 		action = agent.choose_action(obs)
 		obs,reward,done,info = env.step(action)
 		if done:

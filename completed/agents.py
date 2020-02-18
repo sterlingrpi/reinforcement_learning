@@ -47,5 +47,5 @@ class ValueIterAgent():
             self.policy[s] = np.argmax(q_sa)
 
     def choose_action(self, observation):
-
+        self.policy = self.policy.astype('int')
         return self.policy[observation]
