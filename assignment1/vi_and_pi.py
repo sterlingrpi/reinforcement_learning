@@ -2,6 +2,7 @@ import numpy as np
 import gym
 import time
 from assignment1.lake_envs import *
+import time
 
 np.set_printoptions(precision=3)
 
@@ -20,9 +21,11 @@ def policy_iteration(P, nS, nA, gamma=0.9, tol=10e-3):
 
 def value_iteration(P, nS, nA, gamma, tol):
 	value_function = np.zeros(nS)
-	policy = np.random.randint(low=0, high=4, size=nS, dtype=int)
-	for i in range(1000):#find optimal value function
-		value_function_prev = value_function
+	value_function_prev = np.zeros(nS)
+	policy = np.zeros(nS, dtype='int')
+	for i in range(10):#find optimal value function
+		print('value(0) =', max(abs(value_function - value_function_prev)))
+		value_function_prev = np.copy(value_function)
 		for s in range(nS):
 			q_value = []
 			for a in range(nA):
@@ -64,7 +67,7 @@ if __name__ == "__main__":
 	print('env.nA =', env.nA)
 	print("\n" + "-"*25 + "\nBeginning Policy Iteration\n" + "-"*25)
 	V_pi, p_pi = policy_iteration(env.P, env.nS, env.nA, gamma=0.9, tol=1e-3)
-	render_single(env, p_pi, max_steps=10)
+	#render_single(env, p_pi, max_steps=10)
 	print("\n" + "-"*25 + "\nBeginning Value Iteration\n" + "-"*25)
 	V_vi, p_vi = value_iteration(env.P, env.nS, env.nA, gamma=0.9, tol=1e-3)
-	render_single(env, p_vi, max_steps=10)
+	#render_single(env, p_vi, max_steps=10)

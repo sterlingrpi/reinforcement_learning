@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from six import StringIO, b
 from gym import utils
-import discrete_env
+from assignment1 import discrete_env
 
 # Mapping between directions and index number
 LEFT = 0
