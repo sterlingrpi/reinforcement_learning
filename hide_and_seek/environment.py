@@ -23,7 +23,6 @@ class env:
         return self.map[self.fov[0]:self.fov[1], self.fov[2]:self.fov[3]]
 
     def render(self, whole_map=False):
-        print('render:')
         if whole_map:
             ob = self.map
         else:
