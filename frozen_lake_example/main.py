@@ -1,8 +1,8 @@
 import numpy as np
 import gym
 import time
-from lake_envs import *
-from functions import *
+from frozen_lake_example.lake_envs import *
+from frozen_lake_example.functions import *
 
 np.set_printoptions(precision=3)
 
