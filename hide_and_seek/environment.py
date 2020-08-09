@@ -3,8 +3,13 @@ import numpy as np
 class env:
     def __init__(self, map_size=9, ob_size=3):
         self.map = np.zeros((map_size, map_size))
-        self.map[np.random.randint(0, map_size), np.random.randint(0, map_size)] = 1
-        self.fov = np.array([0, ob_size, 0, ob_size])
+        x = np.random.randint(0, map_size)
+        if x > ob_size:
+            y = np.random.randint(0, map_size)
+        else:
+            y = np.random.randint(ob_size, map_size)
+        self.map[x, y] = 1
+        self.fov = np.array([0, ob_size, 0, ob_size])# + map_size//2
 
     def move(self, direction):
         new_fov = np.copy(self.fov)
