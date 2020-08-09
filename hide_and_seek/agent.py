@@ -6,7 +6,7 @@ import numpy as np
 
 class dqn_agent:
     def __init__(self, ob_size, load_weights=False, file_path='dqn_model.h5'):
-        input = Input(shape=(None, 9))
+        input = Input(shape=(None, ob_size*ob_size))
         x = LSTM(units=32)(input)
         x = BatchNormalization()(x)
         output = Dense(4)(x)
