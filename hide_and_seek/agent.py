@@ -1,33 +1,35 @@
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dropout, BatchNormalization, Dense, Flatten
+from tensorflow.keras.layers import LSTM, BatchNormalization, Dense, Flatten, TimeDistributed
 from tensorflow.keras import Input, Model
+from tensorflow.keras.optimizers import SGD, Adam
 import numpy as np
 
 class dqn_agent:
     def __init__(self, ob_size, load_weights=False, file_path='dqn_model.h5'):
-        input = Input(shape=(None, ob_size*ob_size))
-        x = LSTM(units=32)(input)
+        input = Input(shape=(None, ob_size, ob_size))
+        x = TimeDistributed(Flatten())(input)
+        x = LSTM(units=10)(x)
         x = BatchNormalization()(x)
         output = Dense(4)(x)
         model = Model(input, output)
+        model.compile(loss='mse',optimizer=Adam(lr=0.1))
         self.dqn_model = model
         if load_weights:
             self.dqn_model.load_weights(file_path)
+
         self.ob_size = ob_size
-        self.obs = np.zeros(shape=(1, self.ob_size, self.ob_size))
+        self.obs = np.zeros(shape=(1, self.ob_size, self.ob_size), dtype=np.float32)
         self.policies = np.zeros(shape=1)
 
-        self.optimizer = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False, name='SGD')
+        self.optimizer = tf.keras.optimizers.SGD(learning_rate=0.1, momentum=0.1, nesterov=False, name='SGD')
 
     def get_action(self, ob, epsilon):
-        self.obs = np.append([ob], self.obs, axis=0)
+        self.obs = np.append(self.obs, [ob], axis=0)
         if np.random.random() < epsilon:
             policy = np.random.randint(0, 4)
         else:
-            flattened_obs = np.reshape(self.obs, newshape=(1, self.obs.shape[0], self.obs.shape[1]*self.obs.shape[2]))[:, :self.obs.shape[0]-1, :]
-            policy = np.argmax(self.dqn_model.predict(flattened_obs))
-        self.policies = np.append([policy], self.policies, axis=0)
+            policy = np.argmax(self.dqn_model(np.array([self.obs[1:]])))
+        self.policies = np.append(self.policies, [policy], axis=0)
         if policy == 0:
             action = 'w'
         elif policy == 1:
@@ -38,19 +40,13 @@ class dqn_agent:
             action = 'd'
         return action
 
-    def train(self, reward, num_steps):
-        for step in range(num_steps):
-            flattened_obs = np.reshape(self.obs, newshape=(1, self.obs.shape[0], self.obs.shape[1] * self.obs.shape[2]))[:,:step + 1, :]
-            target_policy = tf.reshape(tf.one_hot(self.policies[step + 1], depth=4), shape=(1, 4))
-            with tf.GradientTape() as tape:
-                policy = self.dqn_model(flattened_obs)
-                loss = (target_policy - policy**2)*reward - 0.05
-            #print(policy)
-            #print(loss)
-            #loss = tf.clip_by_value(loss, 0, 1)
-            variables = self.dqn_model.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            self.optimizer.apply_gradients(zip(gradients, variables))
+    def train(self, num_steps, value, gamma):
+        for t in range(num_steps):
+            obs_t = np.array([self.obs[1:t + 2]])
+            Q = self.dqn_model.predict(obs_t)
+            action_t = int(self.policies[t + 1])
+            Q[0, action_t] = value*gamma**(num_steps - t -1)
+            self.dqn_model.fit(obs_t, Q, verbose=0)
         self.obs = np.zeros(shape=(1, self.ob_size, self.ob_size))
         self.policies = np.zeros(shape=1)
 

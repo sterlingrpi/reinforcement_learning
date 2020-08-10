@@ -6,7 +6,7 @@ map_size = 6
 max_steps = 32
 num_episodes = 1000
 gamma = 0.95
-epsilon = 0.5
+epsilon = 0.25
 
 agent = agent.dqn_agent(ob_size, load_weights=False)
 for episode in range(num_episodes):
@@ -21,5 +21,5 @@ for episode in range(num_episodes):
 
     reward = value*gamma**step
     print('reward =', reward)
-    agent.train(reward, step)
+    agent.train(step + 1, value, gamma)
     agent.save()
