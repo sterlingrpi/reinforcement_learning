@@ -13,9 +13,9 @@ class env:
                              [4, 4, 4, 0, 0, 0, 5, 5, 5],
                              [4, 4, 4, 0, 0, 0, 5, 5, 5]])
         x = np.random.randint(0, map_size)
-        y = np.random.randint(ob_size, map_size)
+        y = np.random.randint(0, map_size)
         self.map[x, y] = 7
-        self.fov = np.array([0, ob_size, 0, ob_size]) + np.random.randint(map_size - ob_size + 1)
+        self.fov = np.array([0, ob_size, 0, ob_size]) #+ np.random.randint(map_size - ob_size + 1)
 
     def move(self, direction):
         new_fov = np.copy(self.fov)
