@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     map = map.Map()
     render = render.Render(sc, sc_map)
-    agent = reinforcement_learning.agent(ob_shape=(512, 512), num_actions=4, load_weights=False, file_path='dqn_model.h5')
+    agent = reinforcement_learning.agent(ob_shape=(128, 128), num_actions=4, load_weights=False, file_path='dqn_model.h5')
 
     npc_0 = npc.NPC(sc, (700, 1270), 'bruda')
     npc_1 = npc.NPC(sc, (700, 570), 'bruda_1')
@@ -37,6 +37,8 @@ if __name__ == '__main__':
 
     player = player.Player(npc, clock, map.flat_map)
     ray_cast = raycast_mp.RayCast(map.map)  # , sc, render)
+
+    times_trained = 0
 
     with Pool(processes=4) as pool:
 
@@ -79,19 +81,25 @@ if __name__ == '__main__':
             #render.display_fps(clock)
 
             # do the reinforcement learning things
-            '''
             ob = render.get_ob(sc)
             reward = render.get_reward(ob)
             agent.give_reward(reward)
+            if np.random.random() > 0.95:
+                agent.train(alpha = 0.25, gamma=0.95)
+                times_trained += 1
+                if times_trained >= 10:
+                    agent.update_target_model()
+                    times_trained = 0
+                agent.save()
             action = agent.get_action(ob, epsilon=0)
+            print('action =', action)
 
-            render.draw_map(map.map_of_tiles, player.real_x, player.real_y, player.sin_a, player.cos_a, ob[0] * 200)
+            render.draw_map(np.transpose(ob[0] * 25))
             for i in range(10):
                 if np.count_nonzero(ob == i) > 100 and i != 0:
                     print(i)
-            '''
-            action = 'd'
-            player.movement(action)
+            if action == 'a' or action == 'd':
+                player.movement(action)
 
             # pygame.display.update()
             pygame.display.flip()

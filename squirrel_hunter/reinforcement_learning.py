@@ -7,6 +7,7 @@ class agent:
     def __init__(self, ob_shape, num_actions, load_weights=False, file_path='dqn_model.h5'):
         input = Input(batch_shape=(1, 1, ob_shape[0], ob_shape[1]))
         x = TimeDistributed(Flatten())(input)
+        x = Dense(32)(x)
         x = LSTM(units=32, return_sequences=True, stateful=True)(x)
         x = LSTM(units=32, return_sequences=True, stateful=True)(x)
         x = LSTM(units=32, stateful=True)(x)
@@ -17,6 +18,7 @@ class agent:
 
         input = Input(shape=(None, ob_shape[0], ob_shape[1]))
         x = TimeDistributed(Flatten())(input)
+        x = Dense(32)(x)
         x = LSTM(units=32, return_sequences=True)(x)
         x = LSTM(units=32, return_sequences=True)(x)
         x = LSTM(units=32)(x)
@@ -41,7 +43,7 @@ class agent:
         self.Q_stateful.reset_states()
 
     def get_action(self, ob, epsilon):
-        self.obs = np.append(self.obs, [ob], axis=0)
+        self.obs = np.append(self.obs, ob, axis=0)
         if np.random.random() < epsilon:
             action = np.random.randint(0, 4)
         else:
@@ -60,21 +62,26 @@ class agent:
     def give_reward(self, reward):
         self.rewards = np.append(self.rewards, [reward], axis=0)
 
-    def train(self, num_steps, gamma):
-        t = np.random.randint(1, num_steps + 1)
-        print('t =', t, 'num_steps =', num_steps)
-        obs_t = np.array([self.obs[1:t + 1]])
-        vals = self.Q_target.predict(obs_t)
-        print('vals before =', vals)
-        act_t = int(self.actions[t])
-        if t == num_steps:
-            vals[0, act_t] = self.rewards[t]
-        else:
-            obs_t_plus_1 = np.array([self.obs[1:t + 2]])
+    def train(self, alpha, gamma):
+        print('shape obs =', self.obs.shape)
+        if self.obs.shape[0] >= 4:
+            obs_t = np.array([self.obs[1:-1]])
+            obs_t_plus_1 = np.array([self.obs[1:]])
+            vals = self.Q_target.predict(obs_t)
             vals_target = self.Q_target.predict(obs_t_plus_1)
-            # vals[0, act_t] = vals[0, act_t] + alpha*(self.rewards[t] + gamma*np.amax(vals_target) - vals[0, act_t])
-            vals[0, act_t] = self.rewards[t] + gamma * np.amax(vals_target)
-        print('vals after =', vals)
-        self.Q.fit(obs_t, vals, verbose=0)
-        self.Q_stateful.set_weights(self.Q.get_weights())
-        self.reset_memory()
+
+            print('vals before =', vals)
+            act_t = int(self.actions[-1])
+            vals[0, act_t] = vals[0, act_t] + alpha*(self.rewards[-1] + gamma*np.amax(vals_target) - vals[0, act_t])
+            #vals[0, act_t] = self.rewards[-1] + gamma * np.amax(vals_target)
+            print('vals after =', vals)
+
+            self.Q.fit(obs_t, vals, verbose=0)
+            self.Q_stateful.set_weights(self.Q.get_weights())
+            self.reset_memory()
+
+    def update_target_model(self):
+        self.Q_target.set_weights(self.Q.get_weights())
+
+    def save(self, file_path='dqn_model.h5'):
+        self.Q.save(file_path)

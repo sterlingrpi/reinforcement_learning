@@ -64,26 +64,9 @@ class Render:
                                          (SETTINGS.step_screen, projected_height))
             self.sc.blit(img, (SETTINGS.table_scale_screen[n_ray], SETTINGS.h_HEIGHT - projected_height // 2))
 
-    def draw_map(self, map, player_x, player_y, sin_a, cos_a, array):
+    def draw_map(self, array):
         pygame.pixelcopy.array_to_surface(self.sc_map, array)
-        '''
-        self.sc_map.fill(SETTINGS.BLACK)
-        #Draw minimap
-        [pygame.draw.rect(self.sc_map, SETTINGS.DARKGRAY, obj, 1) for obj in map]
-
-        #Draw minimap player
-        scale_player_x = self.scaling_to_map(player_x)
-        scale_player_y = self.scaling_to_map(player_y)
-
-        pygame.draw.line(self.sc_map, SETTINGS.DARKYELLOW, (scale_player_x, scale_player_y),
-                        (scale_player_x + 14 * cos_a, scale_player_y + 14 * sin_a), 1)
-        pygame.draw.circle(self.sc_map, SETTINGS.DARKRED,
-                          (scale_player_x, scale_player_y), 4)
-
         self.sc.blit(self.sc_map, SETTINGS.map_position)
-        # pygame.draw.line(self.sc, SETTINGS.WHITE, (0, SETTINGS.h_HEIGHT), (SETTINGS.WIDTH, SETTINGS.h_HEIGHT))
-        # pygame.draw.line(self.sc, SETTINGS.WHITE, (0, SETTINGS.h_HEIGHT + 30), (SETTINGS.WIDTH, SETTINGS.h_HEIGHT + 30))
-        '''
 
     def draw_background(self, angle, x, y):
         # pygame.draw.rect(self.sc, SETTINGS.BLUE_SKY, (0, 0, SETTINGS.WIDTH, SETTINGS.h_HEIGHT))
