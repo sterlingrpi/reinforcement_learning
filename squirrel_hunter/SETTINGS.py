@@ -66,7 +66,7 @@ center_ray = projection_plane // 2 - 1
 step_screen = WIDTH // projection_plane
 h_step_screen = step_screen * 2
 h_scale_screen = step_screen // 2
-fps_coords = (WIDTH - 30, HEIGHT//100)
+fps_coords = (WIDTH - 150, HEIGHT//100)
 floor_list = [['' for i in range(RES_H)] for j in range(RES_W)]
 
 '''Floor'''

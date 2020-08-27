@@ -38,6 +38,7 @@ if __name__ == '__main__':
     player = player.Player(npc, clock, map.flat_map)
     ray_cast = raycast_mp.RayCast(map.map)  # , sc, render)
 
+    steps_since_trained = 0
     times_trained = 0
 
     with Pool(processes=4) as pool:
@@ -78,31 +79,32 @@ if __name__ == '__main__':
             #npc_4.draw(player.angle, player.player_coords, walls_1, True)
             npc_0.draw(player.angle, player.player_coords, walls_1, False)
 
-            #render.display_fps(clock)
-
             # do the reinforcement learning things
             ob = render.get_ob(sc)
             reward = render.get_reward(ob)
+            print('reward =', reward)
             agent.give_reward(reward)
-            if np.random.random() > 0.95:
-                agent.train(alpha = 0.25, gamma=0.95)
-                times_trained += 1
-                if times_trained >= 10:
-                    agent.update_target_model()
-                    times_trained = 0
-                agent.save()
-            action = agent.get_action(ob, epsilon=0)
-            print('action =', action)
+            action = agent.get_action(ob, epsilon=0.1)
 
-            render.draw_map(np.transpose(ob[0] * 25))
-            for i in range(10):
-                if np.count_nonzero(ob == i) > 100 and i != 0:
-                    print(i)
+            steps_since_trained += 1
+            if steps_since_trained > 10:
+                steps_since_trained = 0
+                agent.train_batch(alpha = 0.25, gamma=0.95)
+                times_trained += 1
+                if times_trained >= 5:
+                    times_trained = 0
+                    agent.update_target_model()
+                agent.save()
+                        
+            print('action =', action)
+            render.draw_map(ob)
+
             if action == 'a' or action == 'd':
                 player.movement(action)
 
+            render.display_fps(reward)
             # pygame.display.update()
             pygame.display.flip()
-            # clock.tick()
+            #clock.tick()
     pygame.quit()
     sys.exit()

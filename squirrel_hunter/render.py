@@ -44,7 +44,6 @@ class Render:
         }
 
         self.model = models.load_model('./seg_512_128.h5', compile=False)
-        self.ob = []
 
     def draw_world(self, walls, floor):
 
@@ -64,7 +63,13 @@ class Render:
                                          (SETTINGS.step_screen, projected_height))
             self.sc.blit(img, (SETTINGS.table_scale_screen[n_ray], SETTINGS.h_HEIGHT - projected_height // 2))
 
-    def draw_map(self, array):
+    def draw_map(self, ob):
+        ob = np.transpose(ob[0])
+        #array = np.zeros(shape=(128, 128, 3)) + 125
+        array = np.random.randint(low=0, high=1, size=(128, 128, 3))
+        array[:, :, 0] = np.where(ob == 9, 250, 0)
+        array[:, :, 1] = np.where(ob == 3, 250, 0)
+        array[:, :, 2] = np.where(ob == 2, 250, 0)
         pygame.pixelcopy.array_to_surface(self.sc_map, array)
         self.sc.blit(self.sc_map, SETTINGS.map_position)
 
@@ -76,8 +81,9 @@ class Render:
 
     def display_fps(self, clock):
         font = pygame.font.SysFont("Arial", 28)
-        self.fps = clock.get_fps()
-        render = font.render(str(int(self.fps)), 0, SETTINGS.RED)
+        #self.fps = clock.get_fps()
+        #render = font.render(str(int(self.fps)), 0, SETTINGS.RED)
+        render = font.render('reward = ' + str(clock), -10, SETTINGS.RED)
         self.sc.blit(render, SETTINGS.fps_coords)
 
     def mapping(self, coord):
@@ -91,8 +97,8 @@ class Render:
         array = np.transpose(array, axes=[1, 0, 2])
         array = resize(array, (512, 512, 3))
         predictions = self.model.predict(np.array([array]))
-        self.ob = np.argmax(predictions, axis=3)
-        return self.ob
+        ob = np.argmax(predictions, axis=3)
+        return ob
 
     def get_reward(self, ob):
         if np.count_nonzero(ob == 3) > 100:
