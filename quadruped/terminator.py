@@ -25,8 +25,8 @@ class agent:
 
         #initialize DQN
         self.Q = tflite.Interpreter(model_path='Q.tflite')
-        self.check_for_new_model()
         self.Q.allocate_tensors()
+        self.check_for_new_model()
         self.input_details_dqn = self.Q.get_input_details()
         self.output_details_dqn = self.Q.get_output_details()
         self.directions = ['forward', 'left','backward', 'right']
@@ -100,6 +100,7 @@ class agent:
     def check_for_new_model(self):
         try:
             self.Q = tflite.Interpreter(model_path='Q_new.tflite')
+            self.Q.allocate_tensors()
             os.remove('Q.tflite')
             os.rename('Q_new.tflite', 'Q.tflite')
             print('new Q model loaded')
@@ -107,7 +108,7 @@ class agent:
             pass
 
     def should_attack(self, ob):
-        return np.count_nonzero(ob == 3) > 100 or np.count_nonzero(ob == 9) < 75 and np.count_nonzero(ob == 2) < 75
+        return np.count_nonzero(ob == 3) > 150 or np.count_nonzero(ob == 9) < 75 and np.count_nonzero(ob == 2) < 75
 
 
 if __name__ == '__main__':
