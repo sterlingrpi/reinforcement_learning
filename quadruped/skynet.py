@@ -21,9 +21,9 @@ class agent:
         self.sftp = paramiko.SFTPClient.from_transport(t)
 
         #initialize Q model
-        file_path = 'D:/PycharmProjects/reinforcement_learning/squirrel_hunter/Q.h5'
-        self.Q = models.load_model(file_path)
-        self.Q.load_weights(file_path)
+        self.file_path = 'D:/PycharmProjects/reinforcement_learning/squirrel_hunter/Q.h5'
+        self.Q = models.load_model(self.file_path)
+        self.Q.load_weights(self.file_path)
         self.Q_training = models.load_model('D:/PycharmProjects/reinforcement_learning/squirrel_hunter/Q_training.h5')
         self.Q_training.set_weights(self.Q.get_weights())
 
@@ -53,6 +53,7 @@ class agent:
                 target_vals[t, actions[t]] = rewards[t] + gamma * np.amax(vals[t + 1])
             self.Q_training.fit((obs[:-1], lstm_states[:-1]), target_vals, verbose=0)
             self.Q.set_weights(self.Q_training.get_weights())
+            self.Q.save(self.file_path)
 
     def convert_tflite(self):
         converter = tf.lite.TFLiteConverter.from_keras_model(self.Q)
@@ -63,9 +64,10 @@ if __name__ == '__main__':
     genisys = agent()
     while True:
         if genisys.check_for_data():
+            print('training')
             genisys.train()
             genisys.convert_tflite()
             genisys.ship_new_model()
         else:
-            print(time.time())
+            print('sleeping', time.time())
             time.sleep(5)
