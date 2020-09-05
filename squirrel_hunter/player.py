@@ -181,9 +181,9 @@ class Player():
 
         '''Changing player angle'''
         if action == 'a': # keys[pygame.K_a]:
-            self.angle -= math.pi / 100
+            self.angle -= math.pi / 20
         if action == 'd': # keys[pygame.K_d]:
-            self.angle += math.pi / 100
+            self.angle += math.pi / 20
 
         '''For test npc'''
         if keys[pygame.K_z]:
