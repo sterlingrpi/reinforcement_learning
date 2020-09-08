@@ -2,6 +2,6 @@ Reinforcement learning (RL) is a machine learning method where an agent takes ac
 
 The code provided here illustrates a solution to the frozen lake problem. The frozen lake is an environment provided by the OpenAI Gym module. The agent (red square) tries to get from the start (S) to the goal (G) where it receives a reward of 1. Along the way the agent must avoid holes in the ice (H). Additionally, actions are not deterministic and while on the frozen squares (F) the agent might fall into a hole while trying to move in another direction.
 
-![Image description]( https://github.com/sterlingrpi/reinforcement_learning/frozen_lake_example/blob/master/frozen_lake_illustration.png)
+![Image description]( https://github.com/sterlingrpi/reinforcement_learning/blob/master/frozen_lake_example/frozen_lake_illustration.png)
 
 The frozen lake problem is a Markov decision process. The code here illustrates how to solve the problem by both policy iteration and value iteration. Policy iteration involves policy evaluation, by sampling the environment, and then policy improvement. The process is repeated until the policy coverages. While value iteration involves optimizing the value function over repeated iterations and then performing one policy extraction.
