@@ -4,4 +4,4 @@ because the agent makes multiple decisions before a reward is assigned. While al
 (i.e. DeedMind’s AlphaGo and OpenAI’s Five) and achieving industrial success in content recommendation, it is believed my many researchers 
 that RL will eventually solve the problems of robotics, autonomous driving, and artificial general intelligence.
 
-![Rl flowchart]( https://github.com/sterlingrpi/reinforcement_learning/blob/master/RL_flowchart.jpg =500x)
+![RL flowchart]( https://github.com/sterlingrpi/reinforcement_learning/blob/master/RL_flowchart.jpg)
