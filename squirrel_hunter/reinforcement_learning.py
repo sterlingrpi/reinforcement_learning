@@ -5,8 +5,8 @@ from tensorflow.keras import Input, Model
 import numpy as np
 
 class agent:
-    def __init__(self, ob_shape, num_actions, load_weights=False, file_path='dqn_model.h5'):
-        num_units = 32
+    def __init__(self, ob_shape, num_actions, load_weights=False, file_path='Q.h5'):
+        num_units = 64
         input = Input(shape=(1, ob_shape[0], ob_shape[1]))
         state = Input(shape=(6, num_units))
         x = TimeDistributed(Flatten())(input)
@@ -30,17 +30,13 @@ class agent:
         self.Q_target = model
 
         input = Input(shape=(1, ob_shape[0], ob_shape[1]))
-        state = Input(shape=(6, num_units))
         x = TimeDistributed(Flatten())(input)
         x = Dense(num_units)(x)
-        x, h1, c1 = LSTM(units=num_units, return_sequences=True, return_state=True)\
-            (x, initial_state=[state[:, 0, :], state[:, 1, :]])
-        x, h2, c2 = LSTM(units=num_units, return_sequences=True, return_state=True)\
-            (x, initial_state=[state[:, 2, :], state[:, 3, :]])
-        x, h3, c3 = LSTM(units=num_units, return_state=True)\
-            (x, initial_state=[state[:, 4, :], state[:, 5, :]])
+        x = LSTM(units=num_units, return_sequences=True)(x)
+        x = LSTM(units=num_units, return_sequences=True)(x)
+        x = LSTM(units=num_units)(x)
         output = Dense(num_actions)(x)
-        model = Model(inputs=[input, state], outputs=output)
+        model = Model(inputs=input, outputs=output)
         model.compile(loss='mse', optimizer=Adam(lr=0.01))
         self.Q_training = model
 
@@ -51,6 +47,7 @@ class agent:
 
         self.ob_shape = ob_shape
         self.num_actions = num_actions
+        self.wasd = ['w', 'a', 's', 'd']
 
         self.obs = np.zeros(shape=(1, 1, self.ob_shape[0], self.ob_shape[1]), dtype=np.float32)
         self.vals = np.zeros(shape=(1, self.num_actions), dtype=np.float32)
@@ -59,14 +56,14 @@ class agent:
         self.rewards = np.zeros(shape=1)
 
     def reset_memory(self):
-        self.obs = self.obs[None, -1]
+        self.obs = self.obs[None, :, -1, :, :]
         self.vals = self.vals[None, -1]
         self.lstm_states = self.lstm_states[None, -1]
         self.actions = self.actions[None, -1]
         self.rewards = self.rewards[None, -1]
 
     def update_memory(self, ob, vals, lstm_state, action):
-        self.obs = np.append(self.obs, ob, axis=0)
+        self.obs = np.append(self.obs, ob, axis=1)
         self.vals = np.append(self.vals, vals, axis=0)
         self.lstm_states = np.append(self.lstm_states, lstm_state, axis=0)
         self.actions = np.append(self.actions, [action], axis=0)
@@ -74,54 +71,38 @@ class agent:
     def get_action(self, ob, epsilon):
         ob = np.expand_dims(ob, axis=0)
         vals, lstm_state = self.Q.predict((ob, self.lstm_states[None, -1]))
+        print('vals =', vals)
         action = int(np.argmax(vals))
         if np.random.random() < epsilon:
             action = np.random.randint(0, 4)
         self.update_memory(ob, vals, lstm_state, action)
-        if action == 0:
-            action_wasd = 'w'
-        elif action == 1:
-            action_wasd = 'a'
-        elif action == 2:
-            action_wasd = 's'
-        elif action == 3:
-            action_wasd = 'd'
-        return action_wasd
+        return self.wasd[action]
 
     def give_reward(self, reward):
         self.rewards = np.append(self.rewards, [reward], axis=0)
 
+    def gen_bath(self, batch_size, seq_len_max, gamma):
+        seq_len = np.random.randint(low=5, high=np.minimum(self.obs.shape[1] - 5, seq_len_max))
+        obs_seqs = np.zeros(shape=(batch_size, seq_len, self.ob_shape[0], self.ob_shape[1]), dtype=np.float32)
+        target_vals = np.zeros(shape=(batch_size, self.num_actions), dtype=np.float32)
+        for batch in range(batch_size):
+            episode = np.random.randint(self.obs.shape[0])
+            t0 = np.random.randint(self.obs.shape[1] - seq_len - 1)
+            t = t0 + seq_len
+            obs_seqs[batch, :, :, :] = self.obs[None, episode, t0:t, :, :]
+            target_vals[batch, :] = self.vals[None, t]
+            target_vals[batch, self.actions[t]] = self.rewards[t] + gamma * np.amax(self.vals[t + 1])
+        return obs_seqs, target_vals
+
     def train(self, alpha, gamma):
-        t = np.random.randint(1, len(self.obs) - 1)
-        ob_t = self.obs[None, t]
-        ob_t_plus_1 = self.obs[None, t + 1]
-        state_t = self.lstm_states[None, t - 1]
-        #state_t_plus_1  = self.lstm_states[t]
-        vals, state_t_plus_1 = self.Q_target.predict((ob_t, state_t))
-        vals_t_plus_1, _ = self.Q_target.predict((ob_t_plus_1, state_t_plus_1))
-
-        print('vals before =', vals)
-        act_t = int(self.actions[t])
-        vals[0, act_t] = self.rewards[t + 1] + gamma * np.amax(vals_t_plus_1)
-        print('vals after =', vals)
-
-        self.Q_training.fit((ob_t, state_t), vals, verbose=0)
+        obs_seqs, target_vals = self.gen_bath(batch_size=10, seq_len_max=50, gamma=gamma)
+        self.Q_training.fit(obs_seqs, target_vals, verbose=0)
         self.Q.set_weights(self.Q_training.get_weights())
-        self.reset_memory()
-
-    def train_batch(self, alpha, gamma):
-        target_vals = np.copy(self.vals[:-1])
-        for t in range(len(target_vals)):
-            target_vals[t, self.actions[t]] = self.rewards[t] + gamma * np.amax(self.vals[t + 1])
-        print(self.vals)
-        print(target_vals)
-        self.Q_training.fit((self.obs[:-1], self.lstm_states[:-1]), target_vals, verbose=0)
-        self.Q.set_weights(self.Q_training.get_weights())
-        self.reset_memory()
+        #self.reset_memory()
 
 
     def update_target_model(self):
         self.Q_target.set_weights(self.Q.get_weights())
 
-    def save(self, file_path='dqn_model.h5'):
+    def save(self, file_path='Q.h5'):
         self.Q.save(file_path)
