@@ -6,14 +6,20 @@ interacting with the environment. RL can be applied to a wide range of problems;
 teaching, healthcare, robotics, autonomous driving, content recommendations, and it is believed my many researchers that RL will eventually 
 lead to artificial general intelligence.
 
-This repo contains some of my RL projects. IOne of those being squirrel_hunter, which is a simulated 3D environment using pygame
+This repo contains some of my RL projects. IOne of those being squirrel_hunter, which is a sim2real 3D environment using pygame
 library and looks similar to the game Doom. The goal of the agent to is keep the squirrel away from the bird feeder. When the squirrel is 
 seen a reward of -1 is given. If the bird feeder is seen without the squirrel a reward of +1 is given. An example is given in the youtube
 video below. The upper right is the reward for the current state. The lower left is the output from a image segmentation model. The image
-segmentation model is used to determine the reward and is also used as a feature extractor for the RL agent model.
+segmentation model is used to determine the reward and is also used as a feature extractor for the RL agent model. The model is an LSTM
+with states being provided sequencially so it has some sense of events that occured in the past and things that may not be within the
+field of view.
 
 [![](http://img.youtube.com/vi/JT37ikDX7xc/0.jpg)](http://www.youtube.com/watch?v=JT37ikDX7xc "")
 
+The model trained in the sim2real environment is used to run on a real world quadruped (adeept darkpaw). The Raspberry Pi has been replaced
+with a Coral TPU Dev Board for lower inference latency (~40ms) of the image segmentation model with a mobilenet V2 backbone 
+(https://github.com/sterlingrpi/image_segmentation). The agent (terminator) is run on the Dev Board and it saves state and reward data locally.
+A remote server is running (skynet), pulls state reward data from the 
+the da
 
-
-<img src="https://github.com/sterlingrpi/reinforcement_learning/blob/master/RL_flowchart.jpg" width="500">
+<img src="https://github.com/sterlingrpi/reinforcement_learning/blob/master/RL_flowchart.jpg" width="600">
