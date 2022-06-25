@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     map = map.Map()
     render = render.Render(sc, sc_map)
-    agent = reinforcement_learning.agent(ob_shape=(128, 128), num_actions=4, load_weights=False, file_path='dqn_model.h5')
+    agent = reinforcement_learning.agent(ob_shape=(128, 128), num_actions=4, load_weights=True, file_path='Q.h5')
 
     npc_0 = npc.NPC(sc, (700, 1270), 'bruda')
     npc_1 = npc.NPC(sc, (700, 570), 'bruda_1')
@@ -40,6 +40,7 @@ if __name__ == '__main__':
 
     steps_since_trained = 0
     times_trained = 0
+    epsilon = 1
 
     with Pool(processes=4) as pool:
 
@@ -82,19 +83,18 @@ if __name__ == '__main__':
             # do the reinforcement learning things
             ob = render.get_ob(sc)
             reward = render.get_reward(ob)
-            print('reward =', reward)
             agent.give_reward(reward)
-            action = agent.get_action(ob, epsilon=0.1)
+            action = agent.get_action(ob, epsilon=epsilon)
 
             steps_since_trained += 1
-            if steps_since_trained > 10:
+            if steps_since_trained > 25:
                 steps_since_trained = 0
-                agent.train_batch(alpha = 0.25, gamma=0.95)
-                times_trained += 1
-                if times_trained >= 5:
-                    times_trained = 0
-                    agent.update_target_model()
+                agent.train(alpha = 0.25, gamma=0.95)
                 agent.save()
+                epsilon -= 0.05
+                if epsilon <= 0:
+                    epsilon = 0
+                print('epsilon =', epsilon)
                         
             print('action =', action)
             render.draw_map(ob)
